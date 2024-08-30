@@ -1,0 +1,63 @@
+formatVersion: 1
+inputs:
+  Cluster-ENV:
+    type: string
+    title: Cluster-ENV
+    description: vSAN-Cluster-ENV
+    default: vSAN-Cluster
+    enum:
+      - vSAN-Cluster
+      - NFS-Cluster
+resources:
+  Overlay-VM-group:
+    type: Cloud.SecurityGroup
+    properties:
+      securityGroupType: existing
+      constraints:
+        - tag: Overlay-VM-Tag
+      description: This is only for Overlay VMs
+  Web-VM-Group:
+    type: Cloud.SecurityGroup
+    properties:
+      securityGroupType: existing
+      constraints:
+        - tag: Web-VM-Tag
+      description: This is only for Web VMs
+  Overlay-VM:
+    type: Cloud.vSphere.Machine
+    properties:
+      name: Overlay_node-031
+      image: Gold-Image
+      flavor: Gold-Flavor
+      networks:
+        - network: ${resource["NSX-Overlay-Profile"].id}
+          securityGroups:
+            - ${resource["Overlay-VM-group"].id}
+          assignment: dynamic
+  WEB-VM:
+    type: Cloud.vSphere.Machine
+    properties:
+      name: Web_node-031
+      image: Gold-Image
+      flavor: Gold-Flavor
+      networks:
+        - network: ${resource["Web-Segment-Profile"].id}
+          securityGroups:
+            - ${resource["Web-VM-Group"].id}
+          assignment: dynamic
+  NSX-Overlay-Profile:
+    type: Cloud.NSX.Network
+    properties:
+      networkType: existing
+      constraints:
+        - tag: Overlay-Segment
+      description: This is only for Overlay Segment
+      networkCidr: 172.16.1.0/24
+  Web-Segment-Profile:
+    type: Cloud.NSX.Network
+    properties:
+      networkType: existing
+      constraints:
+        - tag: Web-Segment
+      description: This is only for Web Segment
+      networkCidr: 172.17.1.0/24
